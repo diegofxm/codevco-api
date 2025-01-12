@@ -1,0 +1,592 @@
+{
+	"info": {
+		"_postman_id": "b4e3f8a9-5b2d-4f1a-8e1c-9f2b0b3c4d5e",
+		"name": "CodeVCO API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@codevco.co\",\n    \"password\": \"password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Invoices",
+			"item": [
+				{
+					"name": "List Invoices",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/invoices",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"invoices"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Invoice",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/invoices/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"invoices",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Invoice",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"company_id\": 1,\n    \"customer_id\": 1,\n    \"resolution_id\": 1,\n    \"branch_id\": 1,\n    \"currency_id\": 1,\n    \"payment_method_id\": 1,\n    \"type_operation_id\": 10,\n    \"issue_date\": \"2025-01-12\",\n    \"payment_due_date\": \"2025-02-12\",\n    \"notes\": \"Factura de prueba\",\n    \"payment_exchange_rate\": 1,\n    \"lines\": [\n        1,\n        {\n            \"code\": \"P004\",\n            \"name\": \"Otro producto\",\n            \"description\": \"Otro producto\",\n            \"brand\": \"N/A\",\n            \"model\": \"N/A\",\n            \"customs_tariff\": null,\n            \"price\": 150.00,\n            \"unit_measure_id\": 1,\n            \"tax_id\": 1,\n            \"status\": 1\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/invoices",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"invoices"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Invoice",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"notes\": \"Factura de prueba actualizada\",\n    \"payment_due_date\": \"2025-03-12\",\n    \"status\": \"approved\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/invoices/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"invoices",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Invoice",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/invoices/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"invoices",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Credit Notes",
+			"item": [
+				{
+					"name": "List Credit Notes",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/credit-notes",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"credit-notes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Credit Note",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/credit-notes/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"credit-notes",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Credit Note",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"invoice_id\": 1,\n    \"resolution_id\": 1,\n    \"branch_id\": 1,\n    \"issue_date\": \"2025-01-12\",\n    \"notes\": \"Nota crédito de prueba\",\n    \"correction_concept\": \"Devolución de mercancía\",\n    \"discrepancy_code\": \"2\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/credit-notes",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"credit-notes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Credit Note",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"notes\": \"Nota crédito actualizada\",\n    \"correction_concept\": \"Devolución parcial\",\n    \"discrepancy_code\": \"3\",\n    \"status\": \"approved\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/credit-notes/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"credit-notes",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Credit Note",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/credit-notes/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"credit-notes",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Debit Notes",
+			"item": [
+				{
+					"name": "List Debit Notes",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/debit-notes",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"debit-notes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Debit Note",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/debit-notes/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"debit-notes",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Debit Note",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"invoice_id\": 1,\n    \"resolution_id\": 1,\n    \"branch_id\": 1,\n    \"issue_date\": \"2025-01-12\",\n    \"notes\": \"Nota débito de prueba\",\n    \"correction_concept\": \"Intereses por mora\",\n    \"discrepancy_code\": \"1\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/debit-notes",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"debit-notes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Debit Note",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"notes\": \"Nota débito actualizada\",\n    \"correction_concept\": \"Ajuste de precio\",\n    \"discrepancy_code\": \"2\",\n    \"status\": \"approved\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/debit-notes/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"debit-notes",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Debit Note",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/debit-notes/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"debit-notes",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://codevco.test",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "1|LKc2UC6Hz7noWkAYRXK9XiJBQwqf9s10YWIzeadIc5c242f7",
+			"type": "string"
+		}
+	]
+}

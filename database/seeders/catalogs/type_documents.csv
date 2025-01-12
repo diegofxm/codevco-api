@@ -1,0 +1,12 @@
+code,name,description
+11,Registro civil,Registro civil de nacimiento
+12,Tarjeta de identidad,Tarjeta de identidad
+13,Cédula de ciudadanía,Cédula de ciudadanía colombiana
+21,Tarjeta de extranjería,Tarjeta de extranjería
+22,Cédula de extranjería,Cédula de extranjería
+31,NIT,Número de identificación tributaria
+41,Pasaporte,Pasaporte
+42,Documento de identificación extranjero,Documento de identificación extranjero
+47,PEP,Permiso Especial de Permanencia
+50,NIT de otro país,Número de identificación tributaria de otro país
+91,NUIP,Número único de identificación personal

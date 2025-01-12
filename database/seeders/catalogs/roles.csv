@@ -1,0 +1,8 @@
+name,description,created_at
+super_admin,Administrador con acceso total al sistema,2024-01-08 00:00:00
+admin,Administrador de empresa,2024-01-08 00:00:00
+accountant,Contador,2024-01-08 00:00:00
+billing_manager,Encargado de facturación,2024-01-08 00:00:00
+payroll_manager,Encargado de nómina,2024-01-08 00:00:00
+document_manager,Encargado de documentos soporte,2024-01-08 00:00:00
+viewer,Usuario con permisos solo de lectura,2024-01-08 00:00:00

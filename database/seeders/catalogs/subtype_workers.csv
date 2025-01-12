@@ -1,0 +1,16 @@
+code,name,description,type_worker_id
+01,Dependiente pensionado por vejez,Trabajador dependiente pensionado por vejez,01
+02,Independiente pensionado por vejez,Trabajador independiente pensionado por vejez,03
+03,Cotizante no obligado a cotizar pensión,Cotizante no obligado a cotizar pensión,01
+04,Beneficiario UPC adicional,Beneficiario UPC adicional,01
+12,Aprendiz en etapa lectiva,Aprendiz SENA en etapa lectiva,12
+18,Funcionario público sin tope máximo de IBC,Funcionario público sin tope máximo de IBC,01
+19,Aprendiz en etapa productiva,Aprendiz en etapa productiva,12
+20,Estudiante régimen especial Ley 789,Estudiante régimen especial Ley 789,22
+21,Estudiante de posgrado en salud,Estudiante de posgrado en salud,23
+22,Profesor de establecimiento particular,Profesor de establecimiento particular,01
+23,Estudiante aporte solo riesgos laborales,Estudiante aporte solo riesgos laborales,22
+30,Dependiente entidades o universidades públicas,Dependiente entidades o universidades públicas con régimen especial en salud,01
+31,Cooperado con aporte solo salud,Cooperado con aporte solo salud,31
+32,Cooperado con pago solo pensión,Cooperado con pago solo pensión,31
+33,Cooperado con pago solo riesgos,Cooperado con pago solo riesgos laborales,31

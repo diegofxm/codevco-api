@@ -1,0 +1,10 @@
+code,name,description
+01,Transportador,Empresa o persona que presta servicios de transporte
+02,Entidad Financiera,Banco o entidad financiera
+03,Comercio Minorista,Comercio al por menor
+04,Servicios Públicos,Empresa de servicios públicos
+05,Operador Postal,Empresa de servicios postales
+06,Bolsa de Valores,Entidad del mercado de valores
+07,Casa de Cambio,Casa de cambio de divisas
+08,Juegos de Azar,Empresa de juegos de suerte y azar
+09,Otros,Otros tipos de terceros

@@ -1,0 +1,12 @@
+code,name,description
+01,Dependiente,Trabajador vinculado mediante contrato de trabajo
+02,Servicio doméstico,Trabajador de servicio doméstico
+03,Independiente,Trabajador independiente
+04,Madre comunitaria,Madre comunitaria
+12,Aprendiz SENA,Aprendiz etapa lectiva SENA
+19,Aprendiz educación superior,Aprendiz educación superior
+22,Estudiante,Estudiante
+23,Estudiante de posgrado,Estudiante de posgrado
+31,Cooperado,Cooperado de cooperativa de trabajo asociado
+32,Cooperado empresarial,Cooperado empresarial
+33,Cooperado de previsión,Cooperado de previsión social

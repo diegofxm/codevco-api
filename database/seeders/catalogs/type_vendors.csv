@@ -1,0 +1,9 @@
+code,name,description
+01,Persona Natural No Obligada,Persona natural no obligada a facturar electrónicamente
+02,Régimen Simplificado,Persona del régimen simplificado
+03,Extranjero sin NIT,Extranjero sin identificación tributaria en Colombia
+04,Proveedor Informal,Proveedor informal sin RUT
+05,Régimen Común No Obligado,Régimen común no obligado a facturar electrónicamente
+06,Persona Natural Ocasional,Persona natural con ventas ocasionales
+07,OSS No Obligado,Organización sin ánimo de lucro no obligada
+08,Extranjero con NIT,Extranjero con identificación tributaria en Colombia

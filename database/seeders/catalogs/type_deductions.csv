@@ -1,0 +1,16 @@
+code,name,description,category
+01,Salud,Aporte obligatorio a salud,health
+02,Pensión,Aporte obligatorio a pensión,pension
+03,Fondo solidaridad,Aporte fondo de solidaridad,pension
+04,Subsistencia,Aporte subsistencia,pension
+05,Sindicato,Cuota sindical,union
+06,Sanciones,Sanciones disciplinarias,sanction
+07,Libranzas,Libranzas,loan
+08,Pagos a terceros,Pagos por cuenta del trabajador,third_party
+09,Anticipos,Anticipos de nómina,advance
+10,Otras deducciones,Otras deducciones,other
+11,Pensión alimenticia,Pensión alimenticia,alimony
+12,Retención en la fuente,Retención en la fuente,tax
+13,AFC,Aportes AFC,savings
+14,Cooperativa,Aportes cooperativa,cooperative
+15,Embargos,Embargos judiciales,garnishment

@@ -1,0 +1,23 @@
+code,name,description,category
+01,Sueldo de trabajo,Sueldo básico de trabajo,salary
+02,Auxilio de transporte,Auxilio de transporte legal,transport
+03,Subsidio de alimentación,Subsidio de alimentación,food
+04,HED,Hora Extra Diurna,overtime
+05,HEN,Hora Extra Nocturna,overtime
+06,HRN,Hora Recargo Nocturno,overtime
+07,HEDDF,Hora Extra Diurna Dominical/Festivo,overtime
+08,HENDF,Hora Extra Nocturna Dominical/Festivo,overtime
+09,HRNDF,Hora Recargo Nocturno Dominical/Festivo,overtime
+10,Viáticos,Viáticos salariales,travel
+11,Bonificaciones,Bonificaciones salariales,bonus
+12,Comisiones,Comisiones,commission
+13,Prima de servicios,Prima legal de servicios,bonus
+14,Cesantías,Cesantías,severance
+15,Intereses cesantías,Intereses sobre cesantías,severance
+16,Prima de vacaciones,Prima de vacaciones,vacation
+17,Incapacidad EG,Incapacidad Enfermedad General,disability
+18,Incapacidad AT,Incapacidad Accidente de Trabajo,disability
+19,Licencia maternidad,Licencia de maternidad,leave
+20,Licencia paternidad,Licencia de paternidad,leave
+21,Vacaciones compensadas,Vacaciones compensadas en dinero,vacation
+22,Vacaciones disfrutadas,Vacaciones disfrutadas en tiempo,vacation

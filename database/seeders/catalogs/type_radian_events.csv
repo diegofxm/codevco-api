@@ -1,0 +1,15 @@
+code,name,description,requires_previous_event,category
+031,Endoso en Propiedad,Transferencia de la propiedad del título,false,endoso
+032,Endoso en Garantía,Garantía de una obligación,true,endoso
+033,Endoso en Procuración,Facultad para gestionar el cobro,true,endoso
+034,Cancelación de Endoso,Cancelación de un endoso previo,true,endoso
+035,Limitación de Circulación,Restricción para negociar el título,false,limitacion
+036,Terminación de Limitación,Levantamiento de la limitación,true,limitacion
+037,Mandato,Otorgamiento de mandato,false,mandato
+038,Terminación de Mandato,Terminación del mandato,true,mandato
+039,Pago de la Factura,Registro del pago total o parcial,false,pago
+040,Protesto,Falta de aceptación o pago,true,protesto
+041,Transferencia como título valor,Transferencia de los derechos,true,transferencia
+042,Notificación al Deudor,Aviso sobre negociación,false,notificacion
+043,Pago parcial,Registro de pago parcial,false,pago
+044,Limitación para circulación,Nueva limitación de negociación,false,limitacion

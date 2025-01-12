@@ -1,0 +1,8 @@
+code,name,description
+01,HED,Hora Extra Diurna
+02,HEN,Hora Extra Nocturna
+03,HRN,Hora Recargo Nocturno
+04,HEDDF,Hora Extra Diurna Dominical/Festivo
+05,HENDF,Hora Extra Nocturna Dominical/Festivo
+06,HRNDF,Hora Recargo Nocturno Dominical/Festivo
+07,RDF,Recargo Dominical/Festivo

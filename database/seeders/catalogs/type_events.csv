@@ -1,0 +1,13 @@
+code,name,description
+030,Acuse de recibo de Factura Electrónica de Venta,Documento fue recibido por el adquiriente
+031,Reclamo de la Factura Electrónica de Venta,Documento fue rechazado por el adquiriente
+032,Recibo del bien o prestación del servicio,Aceptación expresa del contenido del documento por recepción del bien/servicio
+033,Aceptación expresa,Aceptación expresa del contenido del documento
+034,Aceptación Tácita,Aceptación tácita después del tiempo establecido
+035,Aceptación Tácita por uso del bien/servicio,Aceptación por uso del bien o servicio adquirido
+036,Documento validado por la DIAN,Documento fue validado exitosamente por la DIAN
+037,Documento Rechazado por la DIAN,Documento fue rechazado en la validación por la DIAN
+038,Documento disponible para el adquiriente,Documento está disponible para descarga/consulta
+039,Documento publicado,Documento publicado por el facturador electrónico
+040,Documento fallido,Error en la entrega del documento al adquiriente
+041,Documento reemplazado,Documento fue reemplazado por otro

@@ -1,0 +1,13 @@
+code,name,description
+1,Contado,Instrumento de pago al contado
+2,Crédito,Instrumento de pago a crédito
+3,Tarjeta Crédito,Pago con tarjeta crédito
+4,Tarjeta Débito,Pago con tarjeta débito
+5,Transferencia,Transferencia bancaria
+6,Cheque,Pago con cheque
+7,Efectivo,Pago en efectivo
+8,Nota Crédito,Pago con nota crédito
+9,Compensación,Pago por compensación
+10,Letra de Cambio,Pago con letra de cambio
+11,Otro,Otro método de pago
+12,Depósito,Depósito bancario

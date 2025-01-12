@@ -1,0 +1,14 @@
+code,name,rate,type,status
+01,IVA 19%,19.00,IVA,true
+02,IVA 5%,5.00,IVA,true
+03,IVA 0%,0.00,IVA,true
+04,Exento IVA,0.00,IVA,true
+05,Excluido IVA,0.00,IVA,true
+06,ReteFuente 2.5%,2.50,ReteFuente,true
+07,ReteFuente 3.5%,3.50,ReteFuente,true
+08,ReteFuente 4%,4.00,ReteFuente,true
+09,ReteIVA 15%,15.00,ReteIVA,true
+10,ReteICA 0.69%,0.69,ReteICA,true
+11,ReteICA 1.38%,1.38,ReteICA,true
+12,Impoconsumo 8%,8.00,Impoconsumo,true
+13,Impoconsumo 16%,16.00,Impoconsumo,true

@@ -1,0 +1,6 @@
+document_type_id,document_number,username,password,email,first_name,last_name,phone,role_id,status,created_at,updated_at
+13,1234567890,juan.perez,bcrypt$$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi,juan.perez@empresa.com,Juan,Pérez Gómez,3001234567,1,true,2024-01-08 19:03:00,2024-01-08 19:03:00
+13,98765432,maria.rodriguez,bcrypt$$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi,maria.rodriguez@empresa.com,María,Rodríguez Silva,3109876543,2,true,2024-01-08 19:03:00,2024-01-08 19:03:00
+13,45678912,carlos.martinez,bcrypt$$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi,carlos.martinez@empresa.com,Carlos,Martínez López,3203456789,3,true,2024-01-08 19:03:00,2024-01-08 19:03:00
+13,89012345,ana.garcia,bcrypt$$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi,ana.garcia@empresa.com,Ana,García Ramírez,3145678901,4,true,2024-01-08 19:03:00,2024-01-08 19:03:00
+13,56789123,diego.lopez,bcrypt$$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi,diego.lopez@empresa.com,Diego,López Sánchez,3167890123,5,true,2024-01-08 19:03:00,2024-01-08 19:03:00

@@ -1,0 +1,10 @@
+code,name,description
+01,Tiquete de Transporte,Documento equivalente para servicios de transporte
+02,Extracto Bancario,Documento equivalente para servicios financieros
+03,Tiquete de Máquina Registradora,Documento equivalente para ventas al por menor
+04,Documento de Servicios Públicos,Documento equivalente para servicios públicos
+05,Boleta de Ingreso a Cine,Documento equivalente para exhibición cinematográfica
+06,Documento de Juegos de Suerte,Documento equivalente para juegos de suerte y azar
+07,Documento de Terceros,Documento equivalente expedido por terceros
+08,Documento de Operador Postal,Documento equivalente de operador postal
+09,Documento de Bolsa de Valores,Documento equivalente de bolsa de valores

@@ -1,0 +1,8 @@
+code,name,description
+10,Estándar,Factura de venta estándar
+09,AIU,Factura AIU (Administración Imprevistos y Utilidad)
+11,Mandatos,Factura de mandatos
+12,Transportador,Factura de transportador
+13,Cambiario,Factura cambiaria
+20,Nota Débito,Nota Débito para facturación electrónica
+22,Nota Crédito,Nota Crédito para facturación electrónica
