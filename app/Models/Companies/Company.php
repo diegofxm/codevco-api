@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class Company extends Model
 {
@@ -71,19 +72,94 @@ class Company extends Model
     protected static function booted()
     {
         static::created(function ($company) {
-            // Crear la sucursal principal
+            // Crear la sucursal principal con código basado en el ID de la compañía
+            $branchCode = str_pad($company->id, 3, '0', STR_PAD_LEFT);
             Branch::create([
                 'company_id' => $company->id,
-                'code' => '001',
+                'code' => $branchCode,
                 'name' => $company->business_name . ' - Principal',
                 'address' => $company->address,
                 'city_id' => $company->location_id,
                 'phone' => $company->phone,
                 'email' => $company->email,
                 'manager_name' => 'Gerente Principal',
-                'cost_center' => '001',
+                'cost_center' => $branchCode,
                 'is_main' => true,
                 'status' => true
+            ]);
+        });
+
+        static::updated(function ($company) {
+            Log::info('Company updated event triggered', [
+                'company_id' => $company->id,
+                'changed_fields' => $company->getChanges(),
+                'dirty_fields' => $company->getDirty()
+            ]);
+
+            // Buscar la sucursal principal
+            $mainBranch = Branch::where('company_id', $company->id)
+                              ->where('is_main', true)
+                              ->first();
+            
+            Log::info('Main branch search result', [
+                'found' => $mainBranch ? true : false,
+                'branch_id' => $mainBranch ? $mainBranch->id : null
+            ]);
+            
+            if ($mainBranch) {
+                $updates = [];
+                
+                // Siempre actualizar estos campos si la compañía cambió
+                if ($company->wasChanged()) {
+                    $updates = [
+                        'name' => $company->business_name . ' - Principal',
+                        'address' => $company->address,
+                        'city_id' => $company->location_id,
+                        'phone' => $company->phone,
+                        'email' => $company->email
+                    ];
+                }
+
+                Log::info('Updates to be applied to main branch', [
+                    'updates' => $updates,
+                    'branch_id' => $mainBranch->id
+                ]);
+
+                if (!empty($updates)) {
+                    try {
+                        $mainBranch->update($updates);
+                        Log::info('Main branch updated successfully', [
+                            'branch_id' => $mainBranch->id,
+                            'updates' => $updates
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error('Error updating main branch', [
+                            'error' => $e->getMessage(),
+                            'branch_id' => $mainBranch->id,
+                            'updates' => $updates
+                        ]);
+                    }
+                }
+            }
+        });
+
+        // Evento para eliminar archivos cuando se elimina la compañía
+        static::deleting(function ($company) {
+            // Eliminar logo si existe
+            if ($company->logo_path) {
+                Storage::disk('public')->delete($company->logo_path);
+            }
+            
+            // Eliminar certificado si existe
+            if ($company->certificate_path) {
+                Storage::disk('local')->delete($company->certificate_path);
+            }
+
+            // Limpiar los campos de archivos y contraseña
+            $company->update([
+                'logo_path' => null,
+                'certificate_path' => null,
+                'certificate_password' => null
             ]);
         });
     }
@@ -127,11 +203,6 @@ class Company extends Model
     public function getLogoUrlAttribute()
     {
         return $this->logo_path ? Storage::disk('public')->url($this->logo_path) : null;
-    }
-
-    public function getCertificateUrlAttribute()
-    {
-        return $this->certificate_path ? Storage::disk('private')->url($this->certificate_path) : null;
     }
 
     /**

@@ -28,14 +28,14 @@ class CompanyController extends Controller
                 'logo' => [
                     'disk' => 'public',
                     'directory' => 'companies/logos/' . $company->id,
-                    'filename' => $company->document_number . '_logo_' . now()->format('Ymd_His') . '.' . $file->getClientOriginalExtension(),
+                    'filename' => $company->document_number . '_logo_' . pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME) . '_' . now()->format('Ymd_His') . '.' . $file->getClientOriginalExtension(),
                     'field' => 'logo_path',
                     'is_public' => true
                 ],
                 'certificate' => [
                     'disk' => 'local',
                     'directory' => 'companies/certificates/' . $company->id,
-                    'filename' => $company->document_number . '_certificate_' . now()->format('Ymd_His') . '.' . $file->getClientOriginalExtension(),
+                    'filename' => $company->document_number . '_certificate_' . pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME) . '_' . now()->format('Ymd_His') . '.' . $file->getClientOriginalExtension(),
                     'field' => 'certificate_path',
                     'is_public' => false
                 ]
@@ -46,9 +46,13 @@ class CompanyController extends Controller
                 'config' => $config
             ]);
 
-            // Eliminar archivo anterior si existe
-            if ($company->{$config['field']}) {
-                Storage::disk($config['disk'])->delete($company->{$config['field']});
+            // Eliminar todos los archivos existentes en el directorio
+            if (Storage::disk($config['disk'])->exists($config['directory'])) {
+                $files = Storage::disk($config['disk'])->files($config['directory']);
+                foreach ($files as $existingFile) {
+                    Storage::disk($config['disk'])->delete($existingFile);
+                    Log::info("Deleted existing file", ['file' => $existingFile]);
+                }
             }
 
             // Construir rutas
@@ -387,7 +391,7 @@ class CompanyController extends Controller
             DB::beginTransaction();
 
             // Obtener los datos del request
-            $data = $request->except(['logo', 'certificate', 'type_liabilities', 'economic_activities']);
+            $data = $request->except(['logo', 'certificate', 'type_liabilities', 'economic_activities', '_method', '_token']);
 
             // Convertir valores booleanos y enteros
             if (isset($data['environment'])) {
@@ -417,7 +421,18 @@ class CompanyController extends Controller
 
             // Actualizar datos básicos
             if (!empty($data)) {
-                $company->update($data);
+                Log::info('Antes de actualizar compañía:', [
+                    'original' => $company->getOriginal(),
+                    'changes' => $data
+                ]);
+
+                $company->fill($data);
+                $company->save();
+
+                Log::info('Después de actualizar compañía:', [
+                    'changes_detected' => $company->wasChanged(),
+                    'changed_fields' => $company->getChanges()
+                ]);
             }
 
             // Procesar archivos
