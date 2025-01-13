@@ -6,13 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Users\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
     public function index()
     {
         $users = User::with(['role', 'typeDocument'])->get();
-        return response()->json($users);
+        return response()->json(['users' => $users]);
     }
 
     public function store(Request $request)
@@ -20,7 +21,7 @@ class UserController extends Controller
         $request->validate([
             'role_id' => 'required|exists:roles,id',
             'type_document_id' => 'required|exists:type_documents,id',
-            'document_number' => 'required|string|max:20|unique:users',
+            'document_number' => 'required|string|max:20',
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
@@ -37,63 +38,50 @@ class UserController extends Controller
             'status' => $request->status ?? true
         ]);
 
-        return response()->json($user, 201);
+        return response()->json([
+            'message' => 'Usuario creado exitosamente',
+            'user' => $user->load(['role', 'typeDocument'])
+        ], 201);
     }
 
-    public function show($id)
+    public function show(User $user)
     {
-        try {
-            $user = User::with(['role', 'typeDocument'])->findOrFail($id);
-            return response()->json($user);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'message' => 'User not found'
-            ], 404);
-        }
+        return response()->json([
+            'user' => $user->load(['role', 'typeDocument'])
+        ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, User $user)
     {
-        try {
-            $user = User::findOrFail($id);
+        $request->validate([
+            'role_id' => 'exists:roles,id',
+            'type_document_id' => 'exists:type_documents,id',
+            'document_number' => 'string|max:20',
+            'name' => 'string|max:255',
+            'email' => ['string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'password' => 'nullable|string|min:8',
+            'status' => 'boolean'
+        ]);
 
-            $request->validate([
-                'role_id' => 'exists:roles,id',
-                'type_document_id' => 'exists:type_documents,id',
-                'document_number' => 'string|max:20|unique:users,document_number,' . $user->id,
-                'name' => 'string|max:255',
-                'email' => 'string|email|max:255|unique:users,email,' . $user->id,
-                'password' => 'nullable|string|min:8',
-                'status' => 'boolean'
-            ]);
-
-            $updateData = $request->except('password');
-            if ($request->filled('password')) {
-                $updateData['password'] = Hash::make($request->password);
-            }
-
-            $user->update($updateData);
-
-            return response()->json($user->load(['role', 'typeDocument']));
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'message' => 'User not found'
-            ], 404);
+        $userData = $request->except('password');
+        if ($request->filled('password')) {
+            $userData['password'] = Hash::make($request->password);
         }
+
+        $user->update($userData);
+
+        return response()->json([
+            'message' => 'Usuario actualizado exitosamente',
+            'user' => $user->load(['role', 'typeDocument'])
+        ]);
     }
 
-    public function destroy($id)
+    public function destroy(User $user)
     {
-        try {
-            $user = User::findOrFail($id);
-            $user->delete();
-            return response()->json([
-                'message' => 'User deleted'
-            ], 200);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'message' => 'User not found'
-            ], 404);
-        }
+        $user->delete();
+
+        return response()->json([
+            'message' => 'Usuario eliminado exitosamente'
+        ]);
     }
 }

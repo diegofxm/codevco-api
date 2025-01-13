@@ -1,14 +1,9 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\AuthController;
-use App\Http\Controllers\Api\Companies\CompanyController;
-use App\Http\Controllers\Api\Customers\CustomerController;
 use App\Http\Controllers\Api\Users\UserController;
-use App\Http\Controllers\Api\Invoicing\ResolutionController;
-use App\Http\Controllers\Api\Invoicing\InvoiceController;
-use App\Http\Controllers\Api\Invoicing\CreditNoteController;
-use App\Http\Controllers\Api\Invoicing\DebitNoteController;
 
 // Rutas de autenticación
 Route::post('/register', [AuthController::class, 'register']);
@@ -22,8 +17,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // CRUD de usuarios
     Route::apiResource('users', UserController::class);
-
-    // CRUD de empresas
+	
+	// CRUD de empresas
     Route::apiResource('companies', CompanyController::class);
 
     // CRUD de clientes
@@ -41,3 +36,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('debit-notes', DebitNoteController::class);
 
 });
+
+

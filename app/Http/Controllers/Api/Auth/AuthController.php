@@ -11,69 +11,46 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
-    {
-        $request->validate([
-            'role_id' => 'required|exists:roles,id',
-            'type_document_id' => 'required|exists:type_documents,id',
-            'document_number' => 'required|string|max:20|unique:users',
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
-
-        $user = User::create([
-            'role_id' => $request->role_id,
-            'type_document_id' => $request->type_document_id,
-            'document_number' => $request->document_number,
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'message' => 'User registered successfully',
-            'token' => $token,
-            'user' => $user
-        ], 201);
-    }
-
     public function login(Request $request)
     {
         $request->validate([
             'email' => 'required|email',
-            'password' => 'required',
+            'password' => 'required'
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+                'email' => ['Las credenciales proporcionadas son incorrectas.'],
             ]);
         }
 
-        $user = User::where('email', $request->email)->firstOrFail();
-        $token = $user->createToken('auth_token')->plainTextToken;
+        if (!$user->status) {
+            throw ValidationException::withMessages([
+                'email' => ['Tu cuenta está desactivada.'],
+            ]);
+        }
+
+        $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Logged in successfully',
             'token' => $token,
-            'user' => $user
+            'user' => $user->load('role', 'typeDocument')
         ]);
     }
 
-    public function me()
+    public function logout(Request $request)
     {
-        return response()->json(Auth::user());
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json(['message' => 'Sesión cerrada exitosamente']);
     }
 
-    public function logout()
+    public function me(Request $request)
     {
-        Auth::user()->tokens()->delete();
-
         return response()->json([
-            'message' => 'Logged out successfully'
+            'user' => $request->user()->load('role', 'typeDocument')
         ]);
     }
 }
