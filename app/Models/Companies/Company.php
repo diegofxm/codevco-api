@@ -9,6 +9,7 @@ use App\Models\Catalogs\TypeLiability;
 use App\Models\Catalogs\TypeOrganization;
 use App\Models\Catalogs\TypeRegime;
 use App\Models\Companies\Branch;
+use App\Models\Invoicing\Resolution; 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -172,17 +173,17 @@ class Company extends Model
 
     public function typeOrganization()
     {
-        return $this->belongsTo(TypeOrganization::class);
+        return $this->belongsTo(\App\Models\Catalogs\TypeOrganization::class, 'type_organization_id');
     }
 
     public function typeDocument()
     {
-        return $this->belongsTo(TypeDocument::class);
+        return $this->belongsTo(\App\Models\Catalogs\TypeDocument::class, 'type_document_id');
     }
 
     public function typeRegime()
     {
-        return $this->belongsTo(TypeRegime::class);
+        return $this->belongsTo(\App\Models\Catalogs\TypeRegime::class, 'type_regime_id');
     }
 
     public function location()
@@ -198,6 +199,11 @@ class Company extends Model
     public function economicActivities()
     {
         return $this->belongsToMany(EconomicActivity::class, 'company_economic_activities', 'company_id', 'economic_activity_id');
+    }
+
+    public function resolution()
+    {
+        return $this->hasOne(Resolution::class);
     }
 
     public function getLogoUrlAttribute()

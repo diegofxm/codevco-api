@@ -12,6 +12,7 @@ use App\Models\Catalogs\Currency;
 use App\Models\Catalogs\PaymentMethod;
 use App\Models\Catalogs\TypeOperation;
 use App\Models\Invoicing\InvoiceLine;
+use App\Models\Invoicing\InvoiceItem;
 
 class Invoice extends Model
 {
@@ -25,25 +26,31 @@ class Invoice extends Model
         'currency_id',
         'payment_method_id',
         'type_operation_id',
-        'prefix',
         'number',
+        'prefix',
         'cufe',
         'issue_date',
         'payment_due_date',
         'notes',
         'payment_exchange_rate',
         'total_discount',
+        'total_charges',
         'total_tax',
         'subtotal',
         'total_amount',
-        'status'
+        'status',
+        'order_reference',
+        'delivery_terms',
+        'delivery_date'
     ];
 
     protected $casts = [
-        'issue_date' => 'date',
-        'payment_due_date' => 'date',
+        'issue_date' => 'datetime',
+        'payment_due_date' => 'datetime',
+        'delivery_date' => 'datetime',
         'payment_exchange_rate' => 'decimal:2',
         'total_discount' => 'decimal:2',
+        'total_charges' => 'decimal:2',
         'total_tax' => 'decimal:2',
         'subtotal' => 'decimal:2',
         'total_amount' => 'decimal:2'
@@ -86,6 +93,11 @@ class Invoice extends Model
     }
 
     public function lines()
+    {
+        return $this->hasMany(InvoiceLine::class);
+    }
+
+    public function items()
     {
         return $this->hasMany(InvoiceLine::class);
     }

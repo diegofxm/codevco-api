@@ -35,6 +35,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Rutas de facturación
     Route::apiResource('invoices', InvoiceController::class);
     Route::post('invoices/{id}/change-status', [InvoiceController::class, 'changeStatus']);
+    Route::get('invoices/{id}/xml', [InvoiceController::class, 'generateXml']);
+    Route::get('invoices/{id}/pdf', [InvoiceController::class, 'generatePdf']);
     Route::apiResource('credit-notes', CreditNoteController::class);
     Route::apiResource('debit-notes', DebitNoteController::class);
 

@@ -8,9 +8,10 @@ use App\Models\Invoicing\InvoiceLine;
 use App\Models\Invoicing\Resolution;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+use App\Services\Pdf\PdfService;
 
 class InvoiceController extends Controller
 {
@@ -120,7 +121,7 @@ class InvoiceController extends Controller
                 'data' => $transformedInvoices
             ]);
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            logger($e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error getting invoices',
@@ -458,7 +459,7 @@ class InvoiceController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error($e->getMessage());
+            logger($e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error creating invoice',
@@ -496,7 +497,7 @@ class InvoiceController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            logger($e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error getting invoice',
@@ -532,7 +533,7 @@ class InvoiceController extends Controller
                 ])
             ]);
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            logger($e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating invoice',
@@ -560,7 +561,7 @@ class InvoiceController extends Controller
                 'message' => 'Invoice deleted successfully'
             ]);
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            logger($e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error deleting invoice',
@@ -624,10 +625,81 @@ class InvoiceController extends Controller
                 ])
             ]);
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            logger($e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error changing invoice status',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function generateXml($id)
+    {
+        $invoice = Invoice::with([
+            'company.typeOrganization', 'company.typeDocument', 'company.typeRegime',
+            'company.location.department',
+            'customer.typeOrganization', 'customer.typeDocument', 'customer.typeRegime',
+            'customer.location.department',
+            'lines.product', 'lines.unitMeasure', 'lines.tax',
+            'currency', 'paymentMethod', 'typeOperation', 'resolution', 'branch'
+        ])->findOrFail($id);
+        
+        if ($invoice->status !== 'issued') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only issued invoices can generate XML'
+            ], 422);
+        }
+        
+        try {
+            $xmlService = new \App\Services\Xml\XmlService();
+            $filename = $xmlService->generateInvoiceXml($invoice);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'XML generated successfully',
+                'data' => [
+                    'filename' => $filename,
+                    'url' => Storage::url($filename),
+                    'content' => Storage::get($filename)
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error generating XML',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function generatePdf($id)
+    {
+        try {
+            $invoice = Invoice::with([
+                'company.typeOrganization',
+                'company.typeDocument',
+                'company.typeRegime',
+                'company.location.department',
+                'company.resolution',
+                'customer.typeOrganization',
+                'customer.typeDocument',
+                'customer.typeRegime',
+                'customer.location.department',
+                'items'
+            ])->findOrFail($id);
+            
+            $pdfService = new PdfService($invoice);
+            return response()->json($pdfService->generatePdf());
+        } catch (\Exception $e) {
+            logger('Error generating PDF: ' . $e->getMessage(), [
+                'invoice_id' => $id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error generating PDF',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -678,7 +750,7 @@ class InvoiceController extends Controller
         $cufe = hash('sha384', $cufeString);
 
         // Guardar datos de control
-        Log::info('CUFE Generation', [
+        logger('CUFE Generation', [
             'input_data' => $data,
             'formatted_data' => $formattedData,
             'cufe_string' => $cufeString,
