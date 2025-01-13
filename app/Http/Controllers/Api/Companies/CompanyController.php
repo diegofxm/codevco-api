@@ -231,7 +231,9 @@ class CompanyController extends Controller
             'trade_name' => 'nullable|string|max:255',
             'type_regime_id' => 'required|exists:type_regimes,id',
             'type_liabilities' => 'required|array',
+            'type_liabilities.*' => 'exists:type_liabilities,id',
             'economic_activities' => 'required|array',
+            'economic_activities.*' => 'exists:economic_activities,id',
             'merchant_registration' => 'required|string|max:255',
             'address' => 'nullable|string|max:255',
             'location_id' => 'required|exists:cities,id',
@@ -283,6 +285,8 @@ class CompanyController extends Controller
         }
 
         try {
+            DB::beginTransaction();
+
             $data = $request->except(['logo', 'certificate']);
 
             if (!empty($data['certificate_password'])) {
@@ -309,15 +313,25 @@ class CompanyController extends Controller
             }
 
             if ($request->has('type_liabilities')) {
-                $company->typeLiabilities()->attach($request->type_liabilities);
+                $company->typeLiabilities()->sync($request->type_liabilities);
             }
 
             if ($request->has('economic_activities')) {
-                $company->economicActivities()->attach($request->economic_activities);
+                $company->economicActivities()->sync($request->economic_activities);
             }
 
-            // Recargar el modelo para obtener los últimos cambios y todas las relaciones
-            $company = $company->fresh();
+            DB::commit();
+
+            // Recargar el modelo con todas sus relaciones
+            $company = Company::with([
+                'typeOrganization',
+                'typeDocument',
+                'typeRegime',
+                'typeLiabilities',
+                'economicActivities',
+                'location.department.country',
+                'branches.city'
+            ])->find($company->id);
 
             return response()->json([
                 'message' => 'Company created successfully',
@@ -325,6 +339,7 @@ class CompanyController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
+            DB::rollBack();
             Log::error('Error creating company: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
             ]);
@@ -398,33 +413,6 @@ class CompanyController extends Controller
                 $data['software_pin'] = encrypt($data['software_pin']);
             }
 
-            // Procesar type_liabilities y economic_activities
-            if (isset($data['type_liabilities'])) {
-                $liabilities = is_array($data['type_liabilities'])
-                    ? $data['type_liabilities']
-                    : json_decode($data['type_liabilities'], true);
-                
-                if (is_array($liabilities)) {
-                    // Actualizar el campo JSON
-                    $data['type_liabilities'] = $liabilities;
-                    // Actualizar la relación
-                    $company->typeLiabilities()->sync($liabilities);
-                }
-            }
-
-            if (isset($data['economic_activities'])) {
-                $activities = is_array($data['economic_activities'])
-                    ? $data['economic_activities']
-                    : json_decode($data['economic_activities'], true);
-                
-                if (is_array($activities)) {
-                    // Actualizar el campo JSON
-                    $data['economic_activities'] = $activities;
-                    // Actualizar la relación
-                    $company->economicActivities()->sync($activities);
-                }
-            }
-
             // Actualizar datos básicos
             if (!empty($data)) {
                 $company->update($data);
@@ -439,16 +427,26 @@ class CompanyController extends Controller
                 $this->handleFileUpload($request->file('certificate'), $company, 'certificate');
             }
 
+            // Sincronizar relaciones
+            if ($request->has('type_liabilities')) {
+                $company->typeLiabilities()->sync($request->type_liabilities);
+            }
+
+            if ($request->has('economic_activities')) {
+                $company->economicActivities()->sync($request->economic_activities);
+            }
+
             DB::commit();
 
-            // Recargar el modelo
+            // Recargar el modelo con todas sus relaciones
             $company = Company::with([
                 'typeOrganization',
                 'typeDocument',
                 'typeRegime',
                 'typeLiabilities',
                 'economicActivities',
-                'location.department.country'
+                'location.department.country',
+                'branches.city'
             ])->find($id);
 
             return response()->json([

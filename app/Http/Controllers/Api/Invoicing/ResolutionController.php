@@ -20,26 +20,32 @@ class ResolutionController extends Controller
 {
     protected function transformResolution($resolution)
     {
+        if (!$resolution->relationLoaded('company') || 
+            !$resolution->relationLoaded('branch') || 
+            !$resolution->relationLoaded('typeDocument')) {
+            $resolution->load(['company', 'branch', 'typeDocument']);
+        }
+
         return [
             'id' => $resolution->id,
-            'company' => [
+            'company' => $resolution->company ? [
                 'id' => $resolution->company->id,
-                'name' => $resolution->company->name
-            ],
-            'branch' => [
+                'name' => $resolution->company->business_name
+            ] : null,
+            'branch' => $resolution->branch ? [
                 'id' => $resolution->branch->id,
                 'name' => $resolution->branch->name,
                 'code' => $resolution->branch->code
-            ],
-            'type_document' => [
+            ] : null,
+            'type_document' => $resolution->typeDocument ? [
                 'id' => $resolution->typeDocument->id,
                 'name' => $resolution->typeDocument->name,
                 'code' => $resolution->typeDocument->code
-            ],
+            ] : null,
             'prefix' => $resolution->prefix,
             'resolution' => $resolution->resolution,
-            'resolution_date' => $resolution->resolution_date->format('Y-m-d'),
-            'expiration_date' => $resolution->expiration_date->format('Y-m-d'),
+            'resolution_date' => $resolution->resolution_date ? $resolution->resolution_date->format('Y-m-d') : null,
+            'expiration_date' => $resolution->expiration_date ? $resolution->expiration_date->format('Y-m-d') : null,
             'technical_key' => $resolution->technical_key,
             'from' => $resolution->from,
             'to' => $resolution->to,
@@ -96,6 +102,18 @@ class ResolutionController extends Controller
     public function store(Request $request)
     {
         try {
+            // Validar que la sucursal pertenezca a la compañía
+            $branch = Branch::where('id', $request->branch_id)
+                          ->where('company_id', $request->company_id)
+                          ->first();
+
+            if (!$branch) {
+                return response()->json([
+                    'message' => 'The branch does not belong to the specified company',
+                    'error' => 'Invalid branch_id'
+                ], 422);
+            }
+
             $validated = $request->validate([
                 'company_id' => 'required|exists:companies,id',
                 'branch_id' => [
@@ -109,7 +127,29 @@ class ResolutionController extends Controller
                                    ->whereNull('deleted_at');
                     })
                 ],
-                'type_document_id' => 'required|exists:type_documents,id',
+                'type_document_id' => [
+                    'required',
+                    'exists:type_documents,id',
+                    function ($attribute, $value, $fail) use ($request) {
+                        $typeDocument = TypeDocument::find($value);
+                        if (!$typeDocument) {
+                            $fail('The selected type document does not exist.');
+                            return;
+                        }
+                        
+                        // Verificar si ya existe una resolución activa para este tipo de documento
+                        $existingResolution = Resolution::where('company_id', $request->company_id)
+                            ->where('branch_id', $request->branch_id)
+                            ->where('type_document_id', $value)
+                            ->where('status', true)
+                            ->whereNull('deleted_at')
+                            ->first();
+
+                        if ($existingResolution) {
+                            $fail('An active resolution already exists for this document type in the specified branch.');
+                        }
+                    }
+                ],
                 'prefix' => 'required|string|max:4',
                 'resolution' => 'required|string',
                 'resolution_date' => 'required|date',
@@ -125,18 +165,27 @@ class ResolutionController extends Controller
 
             $resolution = Resolution::create($validated);
 
-            DB::commit();
-
+            // Cargar las relaciones necesarias
             $resolution->load(['company', 'branch', 'typeDocument']);
+
+            DB::commit();
 
             return response()->json([
                 'message' => 'Resolution created successfully',
                 'resolution' => $this->transformResolution($resolution)
             ], 201);
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Validation error',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error($e->getMessage());
+            Log::error('Error creating resolution: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'message' => 'Error creating resolution',
                 'error' => $e->getMessage()

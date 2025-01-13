@@ -24,12 +24,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('users', UserController::class);
 
 	// CRUD de empresas
-
+    Route::apiResource('companies', CompanyController::class);
 
     // CRUD de clientes
-
+    Route::apiResource('customers', CustomerController::class);
     // CRUD de resoluciones
-    Route::apiResource('resolutions', ResolutionController::class);
 
     // Rutas de facturación
     Route::apiResource('invoices', InvoiceController::class);
@@ -41,9 +40,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
 });
 
-Route::apiResource('companies', CompanyController::class);
+Route::apiResource('resolutions', ResolutionController::class);
 
-Route::apiResource('customers', CustomerController::class);
+
+
 
 
 
