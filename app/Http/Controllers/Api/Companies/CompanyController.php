@@ -57,27 +57,7 @@ class CompanyController extends Controller
 
             // Construir rutas
             $relativePath = $config['directory'] . '/' . $config['filename'];
-            $fullPath = storage_path('app' . ($config['is_public'] ? '/public' : '') . '/' . $config['directory']);
-
-            Log::info("Paths built", [
-                'type' => $type,
-                'relativePath' => $relativePath,
-                'fullPath' => $fullPath
-            ]);
-
-            // Crear directorio si no existe
-            if (!file_exists($fullPath)) {
-                Log::info("Creating directory", ['path' => $fullPath]);
-                mkdir($fullPath, 0755, true);
-            }
-
-            // Mover el archivo
-            Log::info("Moving file", [
-                'from' => $file->getPathname(),
-                'to' => $fullPath . '/' . $config['filename']
-            ]);
-
-            $file->move($fullPath, $config['filename']);
+            Storage::disk($config['disk'])->put($relativePath, file_get_contents($file));
 
             // Actualizar la ruta en la base de datos
             Log::info("Updating database", [
@@ -391,11 +371,10 @@ class CompanyController extends Controller
             DB::beginTransaction();
 
             // Obtener los datos del request
-            $data = $request->except(['logo', 'certificate', 'type_liabilities', 'economic_activities', '_method', '_token']);
+            $data = $request->except(['logo', 'certificate', '_method', '_token']);
 
             // Convertir valores booleanos y enteros
             if (isset($data['environment'])) {
-                // Convertir 'false'/'true' a 0/1
                 $data['environment'] = filter_var($data['environment'], FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
             }
 
@@ -419,20 +398,36 @@ class CompanyController extends Controller
                 $data['software_pin'] = encrypt($data['software_pin']);
             }
 
+            // Procesar type_liabilities y economic_activities
+            if (isset($data['type_liabilities'])) {
+                $liabilities = is_array($data['type_liabilities'])
+                    ? $data['type_liabilities']
+                    : json_decode($data['type_liabilities'], true);
+                
+                if (is_array($liabilities)) {
+                    // Actualizar el campo JSON
+                    $data['type_liabilities'] = $liabilities;
+                    // Actualizar la relación
+                    $company->typeLiabilities()->sync($liabilities);
+                }
+            }
+
+            if (isset($data['economic_activities'])) {
+                $activities = is_array($data['economic_activities'])
+                    ? $data['economic_activities']
+                    : json_decode($data['economic_activities'], true);
+                
+                if (is_array($activities)) {
+                    // Actualizar el campo JSON
+                    $data['economic_activities'] = $activities;
+                    // Actualizar la relación
+                    $company->economicActivities()->sync($activities);
+                }
+            }
+
             // Actualizar datos básicos
             if (!empty($data)) {
-                Log::info('Antes de actualizar compañía:', [
-                    'original' => $company->getOriginal(),
-                    'changes' => $data
-                ]);
-
-                $company->fill($data);
-                $company->save();
-
-                Log::info('Después de actualizar compañía:', [
-                    'changes_detected' => $company->wasChanged(),
-                    'changed_fields' => $company->getChanges()
-                ]);
+                $company->update($data);
             }
 
             // Procesar archivos
@@ -442,25 +437,6 @@ class CompanyController extends Controller
 
             if ($request->hasFile('certificate')) {
                 $this->handleFileUpload($request->file('certificate'), $company, 'certificate');
-            }
-
-            // Actualizar relaciones
-            if ($request->has('type_liabilities')) {
-                $liabilities = is_array($request->type_liabilities)
-                    ? $request->type_liabilities
-                    : json_decode($request->type_liabilities, true);
-                if ($liabilities) {
-                    $company->typeLiabilities()->sync($liabilities);
-                }
-            }
-
-            if ($request->has('economic_activities')) {
-                $activities = is_array($request->economic_activities)
-                    ? $request->economic_activities
-                    : json_decode($request->economic_activities, true);
-                if ($activities) {
-                    $company->economicActivities()->sync($activities);
-                }
             }
 
             DB::commit();

@@ -165,7 +165,6 @@ class Company extends Model
         });
     }
 
-    // Relaciones
     public function branches()
     {
         return $this->hasMany(Branch::class);
@@ -173,17 +172,17 @@ class Company extends Model
 
     public function typeOrganization()
     {
-        return $this->belongsTo(\App\Models\Catalogs\TypeOrganization::class, 'type_organization_id');
+        return $this->belongsTo(TypeOrganization::class);
     }
 
     public function typeDocument()
     {
-        return $this->belongsTo(\App\Models\Catalogs\TypeDocument::class, 'type_document_id');
+        return $this->belongsTo(TypeDocument::class);
     }
 
     public function typeRegime()
     {
-        return $this->belongsTo(\App\Models\Catalogs\TypeRegime::class, 'type_regime_id');
+        return $this->belongsTo(TypeRegime::class);
     }
 
     public function location()
@@ -193,12 +192,12 @@ class Company extends Model
 
     public function typeLiabilities()
     {
-        return $this->belongsToMany(TypeLiability::class, 'company_type_liabilities', 'company_id', 'type_liability_id');
+        return $this->belongsToMany(TypeLiability::class, 'company_type_liabilities');
     }
 
     public function economicActivities()
     {
-        return $this->belongsToMany(EconomicActivity::class, 'company_economic_activities', 'company_id', 'economic_activity_id');
+        return $this->belongsToMany(EconomicActivity::class, 'company_economic_activities');
     }
 
     public function resolution()

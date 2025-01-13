@@ -16,43 +16,40 @@ class CustomerController extends Controller
 {
     private function transformCustomer($customer)
     {
-        // Obtener información completa de type_liabilities
-        $typeLiabilities = TypeLiability::whereIn('id', $customer->type_liabilities ?? [])->get();
-        $economicActivities = EconomicActivity::whereIn('id', $customer->economic_activities ?? [])->get();
-
+        // Verificar que las relaciones existan antes de acceder a ellas
         return [
             'id' => $customer->id,
-            'company' => [
+            'company' => $customer->company ? [
                 'id' => $customer->company->id,
                 'business_name' => $customer->company->business_name
-            ],
-            'type_organization' => [
+            ] : null,
+            'type_organization' => $customer->typeOrganization ? [
                 'id' => $customer->typeOrganization->id,
                 'name' => $customer->typeOrganization->name,
                 'code' => $customer->typeOrganization->code
-            ],
-            'type_document' => [
+            ] : null,
+            'type_document' => $customer->typeDocument ? [
                 'id' => $customer->typeDocument->id,
                 'name' => $customer->typeDocument->name,
                 'code' => $customer->typeDocument->code
-            ],
+            ] : null,
             'document_number' => $customer->document_number,
             'dv' => $customer->dv,
             'business_name' => $customer->business_name,
             'trade_name' => $customer->trade_name,
-            'type_regime' => [
+            'type_regime' => $customer->typeRegime ? [
                 'id' => $customer->typeRegime->id,
                 'name' => $customer->typeRegime->name,
                 'code' => $customer->typeRegime->code
-            ],
-            'type_liabilities' => $typeLiabilities->map(function ($liability) {
+            ] : null,
+            'type_liabilities' => $customer->typeLiabilities->map(function ($liability) {
                 return [
                     'id' => $liability->id,
                     'name' => $liability->name,
                     'code' => $liability->code
                 ];
             }),
-            'economic_activities' => $economicActivities->map(function ($activity) {
+            'economic_activities' => $customer->economicActivities->map(function ($activity) {
                 return [
                     'id' => $activity->id,
                     'name' => $activity->name,
@@ -61,21 +58,21 @@ class CustomerController extends Controller
             }),
             'merchant_registration' => $customer->merchant_registration,
             'address' => $customer->address,
-            'location_city' => [
+            'location_city' => $customer->location ? [
                 'id' => $customer->location->id,
                 'name' => $customer->location->name,
                 'code' => $customer->location->code,
-                'location_department' => [
+                'location_department' => $customer->location->department ? [
                     'id' => $customer->location->department->id,
                     'name' => $customer->location->department->name,
                     'code' => $customer->location->department->code,
-                    'location_country' => [
+                    'location_country' => $customer->location->department->country ? [
                         'id' => $customer->location->department->country->id,
                         'name' => $customer->location->department->country->name,
                         'code' => $customer->location->department->country->code
-                    ]
-                ]
-            ],
+                    ] : null
+                ] : null
+            ] : null,
             'postal_code' => $customer->postal_code,
             'phone' => $customer->phone,
             'email' => $customer->email,
@@ -164,7 +161,37 @@ class CustomerController extends Controller
                 $data['status'] = filter_var($data['status'], FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
             }
 
+            // Procesar type_liabilities y economic_activities
+            if (isset($data['type_liabilities'])) {
+                $liabilities = is_array($data['type_liabilities'])
+                    ? $data['type_liabilities']
+                    : json_decode($data['type_liabilities'], true);
+                
+                if (is_array($liabilities)) {
+                    $data['type_liabilities'] = $liabilities;
+                }
+            }
+
+            if (isset($data['economic_activities'])) {
+                $activities = is_array($data['economic_activities'])
+                    ? $data['economic_activities']
+                    : json_decode($data['economic_activities'], true);
+                
+                if (is_array($activities)) {
+                    $data['economic_activities'] = $activities;
+                }
+            }
+
             $customer = Customer::create($data);
+
+            // Sincronizar relaciones después de crear
+            if (isset($liabilities)) {
+                $customer->typeLiabilities()->sync($liabilities);
+            }
+
+            if (isset($activities)) {
+                $customer->economicActivities()->sync($activities);
+            }
 
             DB::commit();
 
@@ -174,6 +201,8 @@ class CustomerController extends Controller
                 'typeOrganization',
                 'typeDocument',
                 'typeRegime',
+                'typeLiabilities',
+                'economicActivities',
                 'location.department.country'
             ])->find($customer->id);
 
@@ -184,7 +213,9 @@ class CustomerController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error creating customer: ' . $e->getMessage());
+            Log::error('Error creating customer: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'message' => 'Error creating customer',
                 'error' => $e->getMessage()
@@ -280,8 +311,34 @@ class CustomerController extends Controller
             DB::beginTransaction();
 
             $data = $request->except(['_method']);
+            
+            // Convertir valores booleanos
             if (isset($data['status'])) {
                 $data['status'] = filter_var($data['status'], FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
+            }
+
+            // Procesar type_liabilities
+            if (isset($data['type_liabilities'])) {
+                $liabilities = is_array($data['type_liabilities'])
+                    ? $data['type_liabilities']
+                    : json_decode($data['type_liabilities'], true);
+                
+                if (is_array($liabilities)) {
+                    $data['type_liabilities'] = $liabilities;
+                    $customer->typeLiabilities()->sync($liabilities);
+                }
+            }
+
+            // Procesar economic_activities
+            if (isset($data['economic_activities'])) {
+                $activities = is_array($data['economic_activities'])
+                    ? $data['economic_activities']
+                    : json_decode($data['economic_activities'], true);
+                
+                if (is_array($activities)) {
+                    $data['economic_activities'] = $activities;
+                    $customer->economicActivities()->sync($activities);
+                }
             }
 
             $customer->update($data);
@@ -294,6 +351,8 @@ class CustomerController extends Controller
                 'typeOrganization',
                 'typeDocument',
                 'typeRegime',
+                'typeLiabilities',
+                'economicActivities',
                 'location.department.country'
             ])->find($id);
 

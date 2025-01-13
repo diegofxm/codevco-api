@@ -9,6 +9,7 @@ use App\Models\Catalogs\TypeOrganization;
 use App\Models\Catalogs\TypeDocument;
 use App\Models\Catalogs\TypeRegime;
 use App\Models\Catalogs\TypeLiability;
+use App\Models\Catalogs\EconomicActivity;
 use App\Models\Catalogs\City;
 use App\Models\Companies\Company;
 
@@ -39,8 +40,18 @@ class Customer extends Model
     protected $casts = [
         'status' => 'boolean',
         'dv' => 'integer',
-        'type_liabilities' => 'json',
-        'economic_activities' => 'json'
+        'type_liabilities' => 'array',
+        'economic_activities' => 'array'
+    ];
+
+    protected $with = [
+        'company:id,business_name',
+        'typeOrganization:id,name,code',
+        'typeDocument:id,name,code',
+        'typeRegime:id,name,code',
+        'location:id,name,code,department_id',
+        'location.department:id,name,code,country_id',
+        'location.department.country:id,name,code'
     ];
 
     // Relaciones
@@ -66,6 +77,16 @@ class Customer extends Model
 
     public function location()
     {
-        return $this->belongsTo(City::class, 'location_id', 'id');
+        return $this->belongsTo(City::class, 'location_id');
+    }
+
+    public function typeLiabilities()
+    {
+        return $this->belongsToMany(TypeLiability::class, 'customer_type_liabilities');
+    }
+
+    public function economicActivities()
+    {
+        return $this->belongsToMany(EconomicActivity::class, 'customer_economic_activities');
     }
 }
