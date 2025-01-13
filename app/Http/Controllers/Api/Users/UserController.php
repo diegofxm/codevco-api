@@ -39,20 +39,36 @@ class UserController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Usuario creado exitosamente',
+            'message' => 'User created successfully',
             'user' => $user->load(['role', 'typeDocument'])
         ], 201);
     }
 
-    public function show(User $user)
+    public function show($id)
     {
+        $user = User::find($id);
+        
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found'
+            ], 404);
+        }
+
         return response()->json([
             'user' => $user->load(['role', 'typeDocument'])
         ]);
     }
 
-    public function update(Request $request, User $user)
+    public function update(Request $request, $id)
     {
+        $user = User::find($id);
+        
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found'
+            ], 404);
+        }
+
         $request->validate([
             'role_id' => 'exists:roles,id',
             'type_document_id' => 'exists:type_documents,id',
@@ -71,17 +87,25 @@ class UserController extends Controller
         $user->update($userData);
 
         return response()->json([
-            'message' => 'Usuario actualizado exitosamente',
+            'message' => 'User updated successfully',
             'user' => $user->load(['role', 'typeDocument'])
         ]);
     }
 
-    public function destroy(User $user)
+    public function destroy($id)
     {
+        $user = User::find($id);
+        
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found'
+            ], 404);
+        }
+
         $user->delete();
 
         return response()->json([
-            'message' => 'Usuario eliminado exitosamente'
+            'message' => 'User deleted successfully'
         ]);
     }
 }
