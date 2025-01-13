@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Api\Invoicing;
 
 use App\Http\Controllers\Controller;
 use App\Models\Invoicing\Resolution;
+use App\Models\Invoicing\Invoice;
+use App\Models\Invoicing\CreditNote;
+use App\Models\Invoicing\DebitNote;
 use App\Models\Companies\Company;
 use App\Models\Companies\Branch;
 use App\Models\Catalogs\TypeDocument;
@@ -146,7 +149,7 @@ class ResolutionController extends Controller
         try {
             $resolution = Resolution::findOrFail($id);
             return response()->json([
-                'success' => true,
+                'message' => 'Resolution retrieved successfully',
                 'data' => $resolution
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -166,7 +169,7 @@ class ResolutionController extends Controller
     {
         try {
             $resolution = Resolution::findOrFail($id);
-            
+
             $validator = Validator::make($request->all(), [
                 'company_id' => 'exists:companies,id',
                 'branch_id' => 'exists:branches,id',
@@ -214,7 +217,7 @@ class ResolutionController extends Controller
     {
         try {
             $resolution = Resolution::findOrFail($id);
-            
+
             // Verificar si la resolución está siendo usada
             $hasInvoices = Invoice::where('resolution_id', $id)->exists();
             $hasCreditNotes = CreditNote::where('resolution_id', $id)->exists();

@@ -116,14 +116,14 @@ class InvoiceController extends Controller
             });
 
             return response()->json([
-                'success' => true,
+                'message' => 'Invoices retrieved successfully',
                 'data' => $transformedInvoices
             ]);
         } catch (\Exception $e) {
             Log::error($e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener las facturas',
+                'message' => 'Error getting invoices',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -150,7 +150,7 @@ class InvoiceController extends Controller
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error de validación',
+                    'message' => 'Validation error',
                     'errors' => $validator->errors()
                 ], 422);
             }
@@ -159,12 +159,12 @@ class InvoiceController extends Controller
 
             // Obtener la resolución y validar
             $resolution = Resolution::find($request->resolution_id);
-            
+
             if (!$resolution->status) {
                 DB::rollBack();
                 return response()->json([
                     'success' => false,
-                    'message' => 'La resolución no está activa'
+                    'message' => 'Resolution is not active'
                 ], 422);
             }
 
@@ -172,7 +172,7 @@ class InvoiceController extends Controller
                 DB::rollBack();
                 return response()->json([
                     'success' => false,
-                    'message' => 'La resolución ha alcanzado su número máximo'
+                    'message' => 'The resolution has reached its maximum number'
                 ], 422);
             }
 
@@ -180,19 +180,97 @@ class InvoiceController extends Controller
                 DB::rollBack();
                 return response()->json([
                     'success' => false,
-                    'message' => 'La resolución ha expirado'
+                    'message' => 'The resolution has expired'
                 ], 422);
             }
 
             // Obtener el siguiente número
-            $nextNumber = $resolution->current_number;
+            $nextNumber = $resolution->current_number === null ? $resolution->from : $resolution->current_number;
 
             // Actualizar el número actual de la resolución
             $resolution->current_number = $nextNumber + 1;
             $resolution->save();
 
-            // Generar CUFE único
-            $cufe = Str::uuid()->toString();
+            // Calcular totales primero
+            $subtotal = 0;
+            $totalDiscount = 0;
+            $totalTax = 0;
+
+            foreach ($request->lines as $line) {
+                // Validar línea
+                $lineValidator = Validator::make($line, [
+                    'quantity' => 'required|numeric|min:0',
+                    'price' => 'required|numeric|min:0',
+                    'discount_rate' => 'nullable|numeric|min:0|max:100',
+                    'tax_id' => 'required|exists:taxes,id'
+                ]);
+
+                if ($lineValidator->fails()) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Line validation error',
+                        'errors' => $lineValidator->errors()
+                    ], 422);
+                }
+
+                $quantity = $line['quantity'];
+                $price = $line['price'];
+                $discountRate = $line['discount_rate'] ?? 0;
+
+                $lineSubtotal = $quantity * $price;
+                $lineDiscount = $lineSubtotal * ($discountRate / 100);
+                
+                // Obtener la tasa de IVA
+                $tax = DB::table('taxes')->find($line['tax_id']);
+                if (!$tax) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Tax not found'
+                    ], 422);
+                }
+                
+                $lineTax = ($lineSubtotal - $lineDiscount) * ($tax->rate / 100);
+
+                $subtotal += $lineSubtotal;
+                $totalDiscount += $lineDiscount;
+                $totalTax += $lineTax;
+            }
+
+            $totalAmount = $subtotal - $totalDiscount + $totalTax;
+
+            // Generar CUFE según especificación DIAN
+            $cufeData = [
+                'invoice_number' => $nextNumber,
+                'issue_date' => $request->issue_date,
+                'issue_time' => now()->format('H:i:s'),
+                'invoice_value' => $totalAmount,
+                'vat_value' => $totalTax,
+                'document_type' => '01', // Factura electrónica
+                'document_number' => $request->customer_id,
+                'technical_key' => $resolution->technical_key ?? config('invoicing.default_technical_key'),
+                'payment_type' => '1' // Contado
+            ];
+            
+            try {
+                $cufe = $this->generateCUFE($cufeData);
+                
+                if (!$this->validateCUFE($cufe)) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Error generating valid CUFE'
+                    ], 500);
+                }
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error generating CUFE',
+                    'error' => $e->getMessage()
+                ], 500);
+            }
 
             $invoice = Invoice::create([
                 'company_id' => $request->company_id,
@@ -209,10 +287,10 @@ class InvoiceController extends Controller
                 'payment_due_date' => $request->payment_due_date,
                 'notes' => $request->notes,
                 'payment_exchange_rate' => $request->payment_exchange_rate,
-                'total_discount' => 0,
-                'total_tax' => 0,
-                'subtotal' => 0,
-                'total_amount' => 0,
+                'total_discount' => $totalDiscount,
+                'total_tax' => $totalTax,
+                'subtotal' => $subtotal,
+                'total_amount' => $totalAmount,
                 'status' => 'draft'
             ]);
 
@@ -224,14 +302,14 @@ class InvoiceController extends Controller
                 if (is_numeric($line)) {
                     // Si es un ID, buscar el producto
                     $product = DB::table('products')->find($line);
-                    
+
                     if (!$product) {
                         DB::rollBack();
                         return response()->json([
                             'success' => false,
-                            'message' => 'Error de validación',
+                            'message' => 'Validation error',
                             'errors' => [
-                                'lines' => ["El producto con ID {$line} no existe"]
+                                'lines' => ["Product with ID {$line} does not exist"]
                             ]
                         ], 422);
                     }
@@ -256,7 +334,7 @@ class InvoiceController extends Controller
                         DB::rollBack();
                         return response()->json([
                             'success' => false,
-                            'message' => 'Error de validación en producto nuevo',
+                            'message' => 'Validation error on new product',
                             'errors' => $validator->errors()
                         ], 422);
                     }
@@ -303,7 +381,7 @@ class InvoiceController extends Controller
                         DB::rollBack();
                         return response()->json([
                             'success' => false,
-                            'message' => 'Error de validación en línea de factura',
+                            'message' => 'Invoice line validation error',
                             'errors' => $validator->errors()
                         ], 422);
                     }
@@ -374,7 +452,7 @@ class InvoiceController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Factura creada exitosamente',
+                'message' => 'Invoice created successfully',
                 'data' => $this->transformInvoice($invoice)
             ], 201);
 
@@ -383,7 +461,7 @@ class InvoiceController extends Controller
             Log::error($e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Error al crear la factura',
+                'message' => 'Error creating invoice',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -408,7 +486,7 @@ class InvoiceController extends Controller
             if (!$invoice) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Factura no encontrada'
+                    'message' => 'Invoice not found'
                 ], 404);
             }
 
@@ -421,7 +499,7 @@ class InvoiceController extends Controller
             Log::error($e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener la factura',
+                'message' => 'Error getting invoice',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -430,69 +508,34 @@ class InvoiceController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $invoice = Invoice::find($id);
+            $invoice = Invoice::findOrFail($id);
 
-            if (!$invoice) {
+            if ($invoice->status !== 'draft') {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Factura no encontrada'
-                ], 404);
-            }
-
-            // Validar campos que se pueden actualizar
-            $validator = Validator::make($request->all(), [
-                'payment_due_date' => 'date|after_or_equal:issue_date',
-                'notes' => 'nullable|string',
-                'status' => 'in:draft,approved,voided'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error de validación',
-                    'errors' => $validator->errors()
+                    'message' => 'Only draft invoices can be updated'
                 ], 422);
             }
 
-            DB::beginTransaction();
+            // Solo permitir actualizar campos no críticos
+            $allowedFields = ['notes', 'payment_due_date'];
+            $updateData = $request->only($allowedFields);
 
-            // Actualizar solo los campos permitidos
-            $invoice->fill($request->only([
-                'payment_due_date',
-                'notes',
-                'status'
-            ]));
-
-            $invoice->save();
-
-            DB::commit();
-
-            // Cargar las relaciones
-            $invoice->load([
-                'company:id,business_name',
-                'customer:id,business_name,document_number',
-                'resolution:id',
-                'branch:id,name',
-                'currency:id,code,name',
-                'paymentMethod:id,name',
-                'typeOperation:id,name',
-                'lines.product:id,name,code',
-                'lines.unitMeasure:id,name,code',
-                'lines.tax:id,name,rate'
-            ]);
+            $invoice->update($updateData);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Factura actualizada exitosamente',
-                'data' => $invoice
+                'message' => 'Invoice updated successfully',
+                'data' => $invoice->load([
+                    'company', 'customer', 'resolution', 'branch',
+                    'currency', 'paymentMethod', 'typeOperation', 'lines'
+                ])
             ]);
-
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error($e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Error al actualizar la factura',
+                'message' => 'Error updating invoice',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -501,42 +544,162 @@ class InvoiceController extends Controller
     public function destroy($id)
     {
         try {
-            $invoice = Invoice::find($id);
-
-            if (!$invoice) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Factura no encontrada'
-                ], 404);
-            }
+            $invoice = Invoice::findOrFail($id);
 
             if ($invoice->status !== 'draft') {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Solo se pueden eliminar facturas en estado borrador'
+                    'message' => 'Only draft invoices can be deleted'
                 ], 422);
             }
 
-            DB::beginTransaction();
-
-            $invoice->lines()->delete();
             $invoice->delete();
-
-            DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Factura eliminada exitosamente'
+                'message' => 'Invoice deleted successfully'
             ]);
-
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error($e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Error al eliminar la factura',
+                'message' => 'Error deleting invoice',
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function changeStatus(Request $request, $id)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'status' => 'required|in:draft,issued,voided'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation error',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $invoice = Invoice::findOrFail($id);
+            $newStatus = $request->status;
+
+            // Validar transiciones de estado permitidas
+            $allowedTransitions = [
+                'draft' => ['issued'],
+                'issued' => ['voided'],
+                'voided' => []
+            ];
+
+            if (!in_array($newStatus, $allowedTransitions[$invoice->status])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Cannot change status from {$invoice->status} to {$newStatus}"
+                ], 422);
+            }
+
+            // Si se está emitiendo la factura, validar que tenga todos los campos requeridos
+            if ($newStatus === 'issued') {
+                // Aquí irían validaciones adicionales antes de emitir
+                if ($invoice->lines->isEmpty()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Cannot issue an invoice without lines'
+                    ], 422);
+                }
+            }
+
+            $invoice->status = $newStatus;
+            $invoice->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Invoice status updated successfully',
+                'data' => $invoice->load([
+                    'company', 'customer', 'resolution', 'branch',
+                    'currency', 'paymentMethod', 'typeOperation', 'lines'
+                ])
+            ]);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error changing invoice status',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function generateCUFE($data)
+    {
+        // Validar datos requeridos
+        $requiredFields = [
+            'invoice_number', 'issue_date', 'issue_time', 'invoice_value',
+            'vat_value', 'document_type', 'document_number', 'technical_key'
+        ];
+
+        foreach ($requiredFields as $field) {
+            if (!isset($data[$field])) {
+                throw new \Exception("Missing required field for CUFE: {$field}");
+            }
+        }
+
+        // Formatear campos según DIAN
+        $formattedData = [
+            'NumFac' => str_pad($data['invoice_number'], 8, '0', STR_PAD_LEFT),
+            'FecFac' => date('Y-m-d', strtotime($data['issue_date'])),
+            'HorFac' => date('H:i:s', strtotime($data['issue_time'])) . '-05:00',
+            'ValFac' => number_format($data['invoice_value'], 2, '.', ''),
+            'CodImp' => '01', // IVA
+            'ValImp' => number_format($data['vat_value'], 2, '.', ''),
+            'DocAdq' => str_pad($data['document_number'], 10, '0', STR_PAD_LEFT),
+            'TipoAmb' => '1', // 1: Producción, 2: Pruebas
+            'ClTec' => $data['technical_key']
+        ];
+
+        // Construir cadena CUFE según orden DIAN
+        $cufeString = sprintf(
+            '%s%s%s%s%s%s%s%s%s',
+            $formattedData['NumFac'],
+            str_replace(['-', ':'], '', $formattedData['FecFac']),
+            str_replace([':', '-'], '', substr($formattedData['HorFac'], 0, 8)),
+            str_replace('.', '', number_format($formattedData['ValFac'], 2, '.', '')),
+            $formattedData['CodImp'],
+            str_replace('.', '', number_format($formattedData['ValImp'], 2, '.', '')),
+            $formattedData['DocAdq'],
+            $formattedData['ClTec'],
+            $formattedData['TipoAmb']
+        );
+
+        // Aplicar algoritmo SHA-384 según DIAN
+        $cufe = hash('sha384', $cufeString);
+
+        // Guardar datos de control
+        Log::info('CUFE Generation', [
+            'input_data' => $data,
+            'formatted_data' => $formattedData,
+            'cufe_string' => $cufeString,
+            'cufe' => $cufe
+        ]);
+
+        return $cufe;
+    }
+
+    private function validateCUFE($cufe)
+    {
+        // Validar longitud (SHA-384 produce 96 caracteres hexadecimales)
+        if (strlen($cufe) !== 96) {
+            return false;
+        }
+
+        // Validar que solo contiene caracteres hexadecimales
+        if (!ctype_xdigit($cufe)) {
+            return false;
+        }
+
+        return true;
     }
 }

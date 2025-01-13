@@ -23,7 +23,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // CRUD de usuarios
     Route::apiResource('users', UserController::class);
 
-
+    // CRUD de empresas
+    Route::apiResource('companies', CompanyController::class);
 
     // CRUD de clientes
     Route::apiResource('customers', CustomerController::class);
@@ -33,10 +34,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Rutas de facturación
     Route::apiResource('invoices', InvoiceController::class);
+    Route::post('invoices/{id}/change-status', [InvoiceController::class, 'changeStatus']);
     Route::apiResource('credit-notes', CreditNoteController::class);
     Route::apiResource('debit-notes', DebitNoteController::class);
 
 });
-
-    // CRUD de empresas
-    Route::apiResource('companies', CompanyController::class);
