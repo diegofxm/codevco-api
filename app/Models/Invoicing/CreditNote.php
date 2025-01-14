@@ -5,6 +5,10 @@ namespace App\Models\Invoicing;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Companies\Branch;
+use App\Models\Invoicing\Invoice;
+use App\Models\Invoicing\Resolution;
+use App\Models\Invoicing\Event;
+use App\Models\Invoicing\InvoiceLine;
 
 class CreditNote extends Model
 {
@@ -55,5 +59,46 @@ class CreditNote extends Model
     public function events()
     {
         return $this->hasMany(Event::class);
+    }
+
+    public function lines()
+    {
+        return $this->hasMany(InvoiceLine::class, 'credit_note_id');
+    }
+
+    public function isDraft()
+    {
+        return $this->status === 'draft';
+    }
+
+    public function isIssued()
+    {
+        return $this->status === 'issued';
+    }
+
+    public function isVoided()
+    {
+        return $this->status === 'voided';
+    }
+
+    public function canBeEdited()
+    {
+        return $this->isDraft();
+    }
+
+    public function canBeDeleted()
+    {
+        return $this->isDraft();
+    }
+
+    public function canChangeStatus($newStatus)
+    {
+        $allowedTransitions = [
+            'draft' => ['issued'],
+            'issued' => ['voided'],
+            'voided' => []
+        ];
+
+        return in_array($newStatus, $allowedTransitions[$this->status] ?? []);
     }
 }

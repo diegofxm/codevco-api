@@ -11,6 +11,8 @@ return new class extends Migration
         Schema::create('invoice_lines', function (Blueprint $table) {
             $table->id();
             $table->foreignId('invoice_id')->constrained()->onDelete('cascade');
+            $table->foreignId('credit_note_id')->nullable()->constrained()->onDelete('cascade');
+            $table->foreignId('debit_note_id')->nullable()->constrained()->onDelete('cascade');
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->text('description');
             $table->decimal('quantity', 12, 2);

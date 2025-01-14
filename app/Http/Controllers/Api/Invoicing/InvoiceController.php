@@ -688,7 +688,14 @@ class InvoiceController extends Controller
                 'customer.typeRegime',
                 'customer.location.department',
                 'items'
-            ])->findOrFail($id);
+            ])->find($id);
+
+            if (!$invoice) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invoice not found',
+                ], 404);
+            }
             
             $pdfService = new PdfService($invoice);
             return response()->json($pdfService->generatePdf());

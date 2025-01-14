@@ -4,22 +4,12 @@ namespace App\Models\Invoicing;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Invoicing\Invoice;
-use App\Models\Invoicing\CreditNote;
-use App\Models\Invoicing\DebitNote;
-use App\Models\Products\Product;
-use App\Models\Products\UnitMeasure;
-use App\Models\Catalogs\Tax;
 
-class InvoiceLine extends Model
+class DebitNoteLine extends Model
 {
     use SoftDeletes;
 
-    protected $table = 'invoice_lines';
-
     protected $fillable = [
-        'invoice_id',
-        'credit_note_id',
         'debit_note_id',
         'product_id',
         'description',
@@ -47,17 +37,6 @@ class InvoiceLine extends Model
         'period_start_date' => 'date',
         'period_end_date' => 'date'
     ];
-
-    // Relaciones
-    public function invoice()
-    {
-        return $this->belongsTo(Invoice::class);
-    }
-
-    public function creditNote()
-    {
-        return $this->belongsTo(CreditNote::class);
-    }
 
     public function debitNote()
     {

@@ -29,21 +29,24 @@ Route::middleware('auth:sanctum')->group(function () {
     // CRUD de clientes
     Route::apiResource('customers', CustomerController::class);
     // CRUD de resoluciones
+    Route::apiResource('resolutions', ResolutionController::class);
 
     // Rutas de facturación
     Route::apiResource('invoices', InvoiceController::class);
     Route::post('invoices/{id}/change-status', [InvoiceController::class, 'changeStatus']);
     Route::get('invoices/{id}/xml', [InvoiceController::class, 'generateXml']);
     Route::get('invoices/{id}/pdf', [InvoiceController::class, 'generatePdf']);
+
+    // Notas Crédito
     Route::apiResource('credit-notes', CreditNoteController::class);
+    Route::post('credit-notes/{id}/change-status', [CreditNoteController::class, 'changeStatus']);
+    Route::get('credit-notes/{id}/xml', [CreditNoteController::class, 'generateXml']);
+    Route::get('credit-notes/{creditNote}/pdf', [CreditNoteController::class, 'pdf']);
+
+    // Notas Débito
     Route::apiResource('debit-notes', DebitNoteController::class);
+    Route::post('debit-notes/{id}/change-status', [DebitNoteController::class, 'changeStatus']);
+    Route::get('debit-notes/{id}/xml', [DebitNoteController::class, 'generateXml']);
+    Route::get('debit-notes/{debitNote}/pdf', [DebitNoteController::class, 'pdf']);
 
 });
-
-Route::apiResource('resolutions', ResolutionController::class);
-
-
-
-
-
-
