@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Invoicing\CreditNote;
 use App\Models\Invoicing\Resolution;
 use App\Models\Invoicing\Invoice;
-use App\Services\CreditNotePdfService;
+use App\Services\Pdf\CreditNotePdfService;
 use App\Services\Xml\CreditNoteXmlService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -82,7 +82,7 @@ class CreditNoteController extends Controller
 
             // Obtener la resolución y validar
             $resolution = Resolution::find($request->resolution_id);
-            
+
             if (!$resolution->status) {
                 DB::rollBack();
                 return response()->json([
@@ -378,38 +378,47 @@ class CreditNoteController extends Controller
         }
     }
 
-    public function generatePdf($id)
+    public function pdf(CreditNote $creditNote)
     {
         try {
-            $creditNote = CreditNote::with([
-                'invoice.company.typeOrganization',
-                'invoice.company.typeDocument',
-                'invoice.company.typeRegime',
-                'invoice.company.location.department',
-                'invoice.customer.typeOrganization',
-                'invoice.customer.typeDocument',
-                'invoice.customer.typeRegime',
-                'invoice.customer.location.department',
-                'lines'
-            ])->find($id);
-
-            if (!$creditNote) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Credit note not found'
-                ], 404);
-            }
-            
-            $pdfService = new CreditNotePdfService($creditNote);
-            return response()->json($pdfService->generatePdf());
+            $result = \App\Services\Pdf\CreditNotePdfService::make($creditNote)->generate();
+            return response()->json($result, $result['success'] ? 200 : 500);
         } catch (\Exception $e) {
             logger('Error generating PDF: ' . $e->getMessage(), [
-                'credit_note_id' => $id,
+                'credit_note_id' => $creditNote->id,
                 'trace' => $e->getTraceAsString()
             ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error generating PDF',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function downloadPdf(CreditNote $creditNote)
+    {
+        try {
+            $filePath = storage_path('app/public/credit-notes/' . $creditNote->id . '/pdf/SETP-' . $creditNote->number . '.pdf');
+            
+            if (!file_exists($filePath)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'PDF file not found'
+                ], 404);
+            }
+
+            return response()->file($filePath);
+        } catch (\Exception $e) {
+            logger('Error downloading PDF: ' . $e->getMessage(), [
+                'credit_note_id' => $creditNote->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error downloading PDF',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -422,9 +431,12 @@ class CreditNoteController extends Controller
                 'invoice',
                 'invoice.company',
                 'invoice.customer',
+                'invoice.branch',
+                'invoice.currency',
                 'lines.unitMeasure',
                 'lines.product',
-                'lines.tax'
+                'lines.tax',
+                'resolution'
             ])->find($id);
 
             if (!$creditNote) {
@@ -434,11 +446,17 @@ class CreditNoteController extends Controller
                 ], 404);
             }
 
-            $xmlService = new CreditNoteXmlService($creditNote);
-            return response()->json($xmlService->generate());
+            // Generar el XML
+            $xmlService = new \App\Services\Xml\CreditNoteXmlService($creditNote);
+            $result = $xmlService->generate();
 
+            return response()->json($result, $result['success'] ? 200 : 500);
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            logger('Error generating XML: ' . $e->getMessage(), [
+                'credit_note_id' => $id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error generating XML',
@@ -503,23 +521,6 @@ class CreditNoteController extends Controller
         }
     }
 
-    public function pdf(CreditNote $creditNote)
-    {
-        try {
-            $result = CreditNotePdfService::make($creditNote)->generate();
-
-            return response()->json($result, $result['success'] ? 200 : 500);
-
-        } catch (\Exception $e) {
-            Log::error($e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al generar el PDF',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
     private function generateCUFE($data)
     {
         $numFac = str_pad($data['invoice_number'], 8, '0', STR_PAD_LEFT);
@@ -538,7 +539,7 @@ class CreditNoteController extends Controller
         $clave = 'A1B2C3'; // Clave técnica del software
 
         // Concatenar los valores
-        $string = $numFac . $fecFac . $valFac . $codImp . $valImp . $codImp2 . $valImp2 . 
+        $string = $numFac . $fecFac . $valFac . $codImp . $valImp . $codImp2 . $valImp2 .
                  $codImp3 . $valImp3 . $valTot . $nitOFE . $nitADQ . $clave . $tipoAmb;
 
         // Generar el CUFE usando SHA384

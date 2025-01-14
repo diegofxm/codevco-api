@@ -508,15 +508,17 @@ class DebitNoteController extends Controller
     public function pdf(DebitNote $debitNote)
     {
         try {
-            $result = DebitNotePdfService::make($debitNote)->generate();
-
+            $result = \App\Services\Pdf\DebitNotePdfService::make($debitNote)->generate();
             return response()->json($result, $result['success'] ? 200 : 500);
-
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            logger('Error generating PDF: ' . $e->getMessage(), [
+                'debit_note_id' => $debitNote->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al generar el PDF',
+                'message' => 'Error generating PDF',
                 'error' => $e->getMessage()
             ], 500);
         }
