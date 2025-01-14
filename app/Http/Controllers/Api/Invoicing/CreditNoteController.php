@@ -506,14 +506,9 @@ class CreditNoteController extends Controller
     public function pdf(CreditNote $creditNote)
     {
         try {
-            $pdfService = new CreditNotePdfService();
-            $result = $pdfService->generate($creditNote);
+            $result = CreditNotePdfService::make($creditNote)->generate();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'PDF generated successfully',
-                'data' => $result
-            ]);
+            return response()->json($result, $result['success'] ? 200 : 500);
 
         } catch (\Exception $e) {
             Log::error($e->getMessage());
