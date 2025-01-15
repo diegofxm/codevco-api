@@ -43,7 +43,8 @@ class Company extends Model
         'software_pin',
         'test_set_id',
         'environment',
-        'status'
+        'status',
+        'subdomain'
     ];
 
     protected $hidden = [

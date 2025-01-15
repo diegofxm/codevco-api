@@ -146,6 +146,7 @@ class CompanyController extends Controller
             'software_id' => $company->software_id,
             'test_set_id' => $company->test_set_id,
             'environment' => $company->environment,
+            'subdomain' => $company->subdomain,
             'branches' => $company->branches->map(function ($branch) {
                 return [
                     'id' => $branch->id,
@@ -277,7 +278,15 @@ class CompanyController extends Controller
             'software_pin' => 'nullable|string|max:255',
             'test_set_id' => 'nullable|string|max:255',
             'environment' => 'required|integer|in:1,2',
-            'status' => 'boolean'
+            'status' => 'boolean',
+            'subdomain' => [
+                'required',
+                'string',
+                'regex:/^[a-z0-9]{3,12}$/',
+                'min:3',
+                'max:12',
+                'unique:companies',
+            ],
         ]);
 
         if ($validator->fails()) {
@@ -288,6 +297,9 @@ class CompanyController extends Controller
             DB::beginTransaction();
 
             $data = $request->except(['logo', 'certificate']);
+
+            // Convertir el subdomain a minúsculas
+            $data['subdomain'] = strtolower($data['subdomain']);
 
             if (!empty($data['certificate_password'])) {
                 $data['certificate_password'] = encrypt($data['certificate_password']);
@@ -337,7 +349,6 @@ class CompanyController extends Controller
                 'message' => 'Company created successfully',
                 'company' => $this->transformCompany($company)
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error creating company: ' . $e->getMessage(), [
@@ -382,19 +393,105 @@ class CompanyController extends Controller
             ], 404);
         }
 
+        $validator = Validator::make($request->all(), [
+            'subdomain' => [
+                'sometimes',
+                'string',
+                'min:3',
+                'max:12',
+                'regex:/^[a-z0-9]+$/',
+                Rule::unique('companies')->ignore($company->id)
+            ],
+            'type_organization_id' => 'sometimes|exists:type_organizations,id',
+            'type_document_id' => 'sometimes|exists:type_documents,id',
+            'document_number' => [
+                'sometimes',
+                'string',
+                'max:20',
+                Rule::unique('companies')->where(function ($query) use ($request, $company) {
+                    return $query
+                        ->where('type_document_id', $request->type_document_id)
+                        ->where('id', '!=', $company->id);
+                })
+            ],
+            'dv' => 'sometimes|integer|min:0|max:9',
+            'business_name' => 'sometimes|string|max:255',
+            'trade_name' => 'sometimes|nullable|string|max:255',
+            'type_regime_id' => 'sometimes|exists:type_regimes,id',
+            'type_liabilities' => 'sometimes|array',
+            'type_liabilities.*' => 'exists:type_liabilities,id',
+            'economic_activities' => 'sometimes|array',
+            'economic_activities.*' => 'exists:economic_activities,id',
+            'merchant_registration' => 'sometimes|string|max:255',
+            'address' => 'sometimes|nullable|string|max:255',
+            'location_id' => 'sometimes|exists:cities,id',
+            'postal_code' => 'sometimes|nullable|string|max:10',
+            'phone' => 'sometimes|string|max:255',
+            'email' => [
+                'sometimes',
+                'email',
+                'max:255',
+                Rule::unique('companies')->ignore($company->id)
+            ],
+            'logo' => 'sometimes|nullable|image|max:2048',
+            'certificate' => [
+                'sometimes',
+                'nullable',
+                'file',
+                'max:2048',
+                function ($attribute, $value, $fail) {
+                    if (!$value) return;
+
+                    $extension = strtolower($value->getClientOriginalExtension());
+                    $mimeType = $value->getMimeType();
+
+                    $validExtensions = ['p12', 'pfx'];
+                    $validMimes = [
+                        'application/x-pkcs12',
+                        'application/x-pkcs12-file',
+                        'application/octet-stream'
+                    ];
+
+                    if (!in_array($extension, $validExtensions)) {
+                        $fail('El certificado debe ser un archivo .p12 o .pfx');
+                        return;
+                    }
+
+                    if (!in_array($mimeType, $validMimes)) {
+                        Log::warning('Certificate validation: Invalid MIME type', [
+                            'mime' => $mimeType,
+                            'extension' => $extension,
+                            'original_name' => $value->getClientOriginalName()
+                        ]);
+                    }
+                }
+            ],
+            'certificate_password' => 'sometimes|required_with:certificate|nullable|string|max:255',
+            'software_id' => 'sometimes|nullable|string|max:255',
+            'software_pin' => 'sometimes|nullable|string|max:255',
+            'test_set_id' => 'sometimes|nullable|string|max:255',
+            'environment' => 'sometimes|integer|in:1,2',
+            'status' => 'sometimes|boolean'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
         try {
             DB::beginTransaction();
 
             // Obtener los datos del request
-            $data = $request->except(['logo', 'certificate', '_method', '_token']);
+            $data = $validator->validated();
 
-            // Convertir valores booleanos y enteros
-            if (isset($data['environment'])) {
-                $data['environment'] = filter_var($data['environment'], FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
+            // Convertir el subdomain a minúsculas si existe
+            if (isset($data['subdomain'])) {
+                $data['subdomain'] = strtolower($data['subdomain']);
             }
 
+            // Convertir valores booleanos
             if (isset($data['status'])) {
-                $data['status'] = filter_var($data['status'], FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
+                $data['status'] = filter_var($data['status'], FILTER_VALIDATE_BOOLEAN);
             }
 
             Log::info('Datos a actualizar:', [
@@ -453,7 +550,6 @@ class CompanyController extends Controller
                 'message' => 'Company updated successfully',
                 'company' => $this->transformCompany($company)
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error updating company: ' . $e->getMessage(), [
@@ -504,7 +600,6 @@ class CompanyController extends Controller
             return response()->json([
                 'message' => 'Company deleted successfully'
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error deleting company: ' . $e->getMessage(), [

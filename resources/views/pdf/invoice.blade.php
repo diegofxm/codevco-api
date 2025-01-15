@@ -10,190 +10,165 @@
             padding: 20px;
             font-size: 12px;
         }
-        .header-table {
-            width: 100%;
-            border-collapse: collapse;
+        .header {
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
             margin-bottom: 20px;
-        }
-        .header-table td {
-            border: 1px solid #000;
-            padding: 10px;
-            vertical-align: top;
-        }
-        .logo {
-            max-width: 200px;
-            height: auto;
         }
         .company-info {
+            float: left;
+            width: 60%;
+        }
+        .invoice-info {
+            float: right;
+            width: 35%;
+            text-align: right;
+        }
+        .clear {
+            clear: both;
+        }
+        .customer-info {
+            margin: 20px 0;
+            padding: 10px;
+            background: #f9f9f9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background: #333;
+            color: white;
+            padding: 8px;
             text-align: left;
         }
-        .info-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        .info-table td {
-            border: 1px solid #000;
-            padding: 10px;
-            vertical-align: top;
-        }
-        .info-header {
-            background-color: #666;
-            color: white;
-            padding: 10px;
-            font-weight: bold;
-        }
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        .items-table th {
-            background-color: #666;
-            color: white;
+        td {
             padding: 8px;
-            text-align: center;
-            border: 1px solid #000;
+            border-bottom: 1px solid #ddd;
         }
-        .items-table td {
-            border: 1px solid #000;
-            padding: 8px;
-            text-align: center;
-        }
-        .totals-table {
-            width: 30%;
+        .totals {
             float: right;
-            border-collapse: collapse;
-        }
-        .totals-table td {
-            border: 1px solid #000;
-            padding: 8px;
-        }
-        .totals-header {
-            background-color: #666;
-            color: white;
-            text-align: center;
-        }
-        .footer-table {
-            width: 100%;
-            border-collapse: collapse;
+            width: 35%;
             margin-top: 20px;
         }
-        .footer-table td {
-            border: 1px solid #000;
-            padding: 10px;
-            vertical-align: top;
+        .totals table {
+            width: 100%;
+        }
+        .totals td {
+            padding: 5px;
+        }
+        .totals tr:last-child {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 11px;
         }
         .qr-code {
-            width: 150px;
-            height: 150px;
+            text-align: center;
+            margin: 20px 0;
         }
-        .email-link {
-            color: #0000EE;
-            text-decoration: underline;
+        .qr-code img {
+            max-width: 150px;
         }
     </style>
 </head>
 <body>
-    <table class="header-table">
-        <tr>
-            <td width="50%">
-                <img src="https://i.postimg.cc/0yM3rkgN/logo-dise-o.png" alt="Logo" class="logo">
-            </td>
-            <td width="50%">
-                <div class="company-info">
-                    Razón Social: {{ $invoice->company->business_name }}<br>
-                    NIT: {{ $invoice->company->document_number }}<br>
-                    Dirección: {{ $invoice->company->address }}<br>
-                    Ciudad: {{ $invoice->company->city }}<br>
-                    Correo Electrónico: <span class="email-link">{{ $invoice->company->email }}</span><br>
-                    Teléfono: {{ $invoice->company->phone }}
-                </div>
-            </td>
-        </tr>
-    </table>
+    <div class="header">
+        <div class="company-info">
+            <h2>{{ $invoice->company->business_name }}</h2>
+            <p>
+                NIT: {{ $invoice->company->document_number }}<br>
+                {{ $invoice->company->address }}<br>
+                {{ $invoice->company->phone }}<br>
+                {{ $invoice->company->email }}
+            </p>
+        </div>
+        <div class="invoice-info">
+            <h1>FACTURA ELECTRÓNICA</h1>
+            <h3>{{ $invoice->prefix }}-{{ $invoice->number }}</h3>
+            <p>
+                Fecha: {{ $invoice->issue_date->format('Y-m-d') }}<br>
+                Hora: {{ $invoice->issue_date->format('H:i:s') }}<br>
+                Vence: {{ $invoice->payment_due_date->format('Y-m-d') }}
+            </p>
+        </div>
+        <div class="clear"></div>
+    </div>
 
-    <table class="info-table">
-        <tr>
-            <td width="50%">
-                <div class="info-header">Cliente</div>
-                Razón Social: {{ $invoice->customer->business_name }}<br>
-                NIT: {{ $invoice->customer->document_number }}<br>
-                Dirección: {{ $invoice->customer->address }}<br>
-                Ciudad: {{ $invoice->customer->city }}<br>
-                Correo Electrónico: <span class="email-link">{{ $invoice->customer->email }}</span><br>
-                Teléfono: {{ $invoice->customer->phone }}
-            </td>
-            <td width="50%">
-                <div class="info-header">Factura Electrónica de Venta</div>
-                Número: {{ $invoice->prefix }}-{{ $invoice->number }}<br>
-                Fecha de Expedición: {{ optional($invoice->issue_date)->format('Y-m-d') ?? 'N/A' }}<br>
-                Fecha de Vencimiento: {{ optional($invoice->payment_due_date)->format('Y-m-d') ?? 'N/A' }}
-            </td>
-        </tr>
-    </table>
+    <div class="customer-info">
+        <h3>DATOS DEL CLIENTE</h3>
+        <p>
+            <strong>{{ $invoice->customer->business_name }}</strong><br>
+            NIT/CC: {{ $invoice->customer->document_number }}<br>
+            Dirección: {{ $invoice->customer->address }}<br>
+            Teléfono: {{ $invoice->customer->phone }}<br>
+            Email: {{ $invoice->customer->email }}
+        </p>
+    </div>
 
-    <table class="items-table">
+    <table>
         <thead>
             <tr>
-                <th>Cantidad</th>
+                <th>Código</th>
                 <th>Descripción</th>
-                <th>Precio Unitario</th>
-                <th>Subtotal</th>
+                <th>Cantidad</th>
+                <th>Precio Unit.</th>
+                <th>Dcto.</th>
+                <th>IVA</th>
+                <th>Total</th>
             </tr>
         </thead>
         <tbody>
             @foreach($invoice->lines as $line)
             <tr>
-                <td>{{ number_format($line->quantity, 0) }}</td>
-                <td style="text-align: left;">{{ $line->description }}</td>
-                <td>${{ number_format($line->price, 2, ',', '.') }}</td>
-                <td>${{ number_format($line->subtotal, 2, ',', '.') }}</td>
+                <td>{{ $line->product->code }}</td>
+                <td>{{ $line->description }}</td>
+                <td>{{ number_format($line->quantity, 2) }}</td>
+                <td>${{ number_format($line->price, 2) }}</td>
+                <td>{{ number_format($line->discount_rate, 2) }}%</td>
+                <td>{{ number_format($line->tax->rate, 2) }}%</td>
+                <td>${{ number_format($line->total, 2) }}</td>
             </tr>
             @endforeach
         </tbody>
     </table>
 
-    <table class="totals-table">
-        <tr>
-            <td class="totals-header" colspan="2">Precio Unitario</td>
-            <td class="totals-header">Totales</td>
-        </tr>
-        <tr>
-            <td colspan="2">SUBTOTAL</td>
-            <td>${{ number_format($invoice->subtotal, 2, ',', '.') }}</td>
-        </tr>
-        <tr>
-            <td colspan="2">DESCUENTO</td>
-            <td>${{ number_format($invoice->total_discount, 2, ',', '.') }}</td>
-        </tr>
-        <tr>
-            <td colspan="2">IVA 19.00%</td>
-            <td>${{ number_format($invoice->total_tax, 2, ',', '.') }}</td>
-        </tr>
-        <tr>
-            <td colspan="2">TOTAL</td>
-            <td>${{ number_format($invoice->total_amount, 2, ',', '.') }}</td>
-        </tr>
-    </table>
+    <div class="totals">
+        <table>
+            <tr>
+                <td>Subtotal:</td>
+                <td>${{ number_format($invoice->subtotal, 2) }}</td>
+            </tr>
+            <tr>
+                <td>Descuento:</td>
+                <td>${{ number_format($invoice->total_discount, 2) }}</td>
+            </tr>
+            <tr>
+                <td>IVA:</td>
+                <td>${{ number_format($invoice->total_tax, 2) }}</td>
+            </tr>
+            <tr>
+                <td>Total:</td>
+                <td>${{ number_format($invoice->total_amount, 2) }}</td>
+            </tr>
+        </table>
+    </div>
+    <div class="clear"></div>
 
-    <div style="clear: both;"></div>
+    <div class="qr-code">
+        <img src="{{ $qrPath }}" alt="QR Code">
+        <p>CUFE: {{ $invoice->cufe }}</p>
+    </div>
 
-    <table class="footer-table">
-        <tr>
-            <td width="20%">
-                <img src="{{ $qrPath }}" alt="QR Code" class="qr-code">
-            </td>
-            <td width="80%">
-                <strong>Notas:</strong><br>
-                {{ $invoice->notes }}<br><br>
-                <strong>CUFE:</strong><br>
-                {{ $invoice->cufe }}<br><br>
-                <strong>Resolución de Facturación No:</strong> {{ $invoice->resolution->number }} del {{ optional($invoice->resolution->date)->format('Y-m-d') ?? 'N/A' }}<br>
-                Rangos de numeración desde: {{ $invoice->resolution->from }}, hasta: {{ $invoice->resolution->to }}<br>
-                Vigencia: desde {{ optional($invoice->resolution->start_date)->format('Y-m-d') ?? 'N/A' }}, hasta: {{ optional($invoice->resolution->end_date)->format('Y-m-d') ?? 'N/A' }}
-            </td>
-        </tr>
-    </table>
+    <div class="footer">
+        <p>Esta factura electrónica cumple con los requisitos de la DIAN según la resolución {{ $invoice->resolution->number }}</p>
+        <p>{{ $invoice->notes }}</p>
+    </div>
 </body>
 </html>

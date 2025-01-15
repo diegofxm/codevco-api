@@ -36,6 +36,7 @@ return new class extends Migration
             $table->string('certificate_password')->nullable();
             $table->tinyInteger('environment')->default(1);
             $table->boolean('status')->default(true);
+            $table->string('subdomain', 12)->unique();
             $table->softDeletes();
             $table->timestamps();
         });
